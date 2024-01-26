@@ -20,11 +20,10 @@ class Game:
         with open(os.path.join(os.path.dirname(__file__), path_guesses), "r") as f:
             self.VALID_GUESSES = tuple(l.upper() for l in f.read().splitlines() if len(l) == self.LENGTH)
 
-        # official list of guesses does not include solutions, so add them, ignoring duplicates (albeit no duplicates in official lists)
+        # official list of guesses does not include solutions, so add them, ignoring duplicates (albeit no duplicates
+        # in official lists)
         self.VALID_GUESSES = tuple(set(self.VALID_SOLUTIONS + self.VALID_GUESSES))
 
-        self.POSSIBLE_WORDS = list(self.VALID_GUESSES)
-  
     def play(self, player, solution, hints=False):
         player.start()
         round = 1
@@ -44,8 +43,8 @@ class Game:
             states = Game.check_guess(guess, solution)
 
             if hints and states != Game.WIN_STATES:
-                self.POSSIBLE_WORDS = [w for w in self.POSSIBLE_WORDS if Game.is_same_response(guess, w, states)]
-                hint = len(self.POSSIBLE_WORDS)
+                self.VALID_GUESSES = [w for w in self.VALID_GUESSES if Game.is_same_response(guess, w, states)]
+                hint = len(self.VALID_GUESSES)
             else:
                 hint = -1
 
