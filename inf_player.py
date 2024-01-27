@@ -1,5 +1,4 @@
 import itertools
-import time
 from typing import List
 import numpy as np
 import wordle
@@ -8,7 +7,8 @@ import pandas as pd
 import multiprocessing
 from joblib import Parallel, delayed
 
-class InformedPlayer(CLIPlayer):
+
+class InfPlayer(CLIPlayer):
 
     def __init__(self, game):
         super().__init__()
@@ -18,14 +18,13 @@ class InformedPlayer(CLIPlayer):
             wordle.LetterStates.NOTPRESENT,
             wordle.LetterStates.INCORRECTPOSITION
         ], repeat=5))
-        print(f"There are {len(self.game.VALID_SOLUTIONS)} valid guesses, and {len(self.game.VALID_GUESSES)} possible words")
+        print(f"There are {len(self.game.VALID_SOLUTIONS)} valid solutions , and {len(self.game.VALID_GUESSES)} valid "
+              f"guesses")
 
         self.actual_possibilities = self.game.VALID_GUESSES
         self.current_distribution = pd.read_csv("data/word_distributions.csv",
-                                                usecols=["word", "distribution", "entropy"])\
-                                    .sort_values(by="entropy", ascending=False)
-      # self.current_distribution= pd.DataFrame(self.calc_distributions_and_entropy(self.actual_possibilities)).sort_values(by="entropy",
-      #                                                                                          ascending=False)
+                                                usecols=["word", "distribution", "entropy"]) \
+            .sort_values(by="entropy", ascending=False)
 
     def calc_word_distribution(self, word: str):
         result = []
@@ -40,7 +39,7 @@ class InformedPlayer(CLIPlayer):
         vals = dists[dists > 0]
         return -np.sum(vals * np.log2(vals))
 
-    def calc_distribution_and_entropy(self,word):
+    def calc_distribution_and_entropy(self, word):
         dist = self.calc_word_distribution(word)
         return ({
             'word': word,
@@ -48,17 +47,20 @@ class InformedPlayer(CLIPlayer):
             'entropy': self.calc_entropy(dist)
         })
 
-    def calc_distributions_and_entropies_parallel(self,words):
+    def calc_distributions_and_entropies_parallel(self, words):
         parallel_results = Parallel(n_jobs=multiprocessing.cpu_count())(
             delayed(self.calc_distribution_and_entropy)(word) for word in words)
         return parallel_results
+
     def calc_distributions_and_entropies(self, words):
         result = []
-        for i,w in enumerate(words):
+        for i, w in enumerate(words):
             result.append(self.calc_distribution_and_entropy(w))
         return result
 
     def narrow_guesses(self, guess):
+        if not isinstance(guess, tuple):
+            raise Exception(f"Wrong type for 'guess' argument. Should be tuple,   got {type(guess)}")
         possibilities = self.actual_possibilities
         for i, (letter, state) in enumerate(zip(list(guess[0]), guess[1])):
             if state == wordle.LetterStates.NOTPRESENT:
@@ -73,12 +75,8 @@ class InformedPlayer(CLIPlayer):
         super().handle_response(guess, states, hint)
         print()
         self.actual_possibilities = self.narrow_guesses(self._response_history[-1])
-        # print("Actual possibilities")
-        # print(self.actual_possibilities)
-        # print(len(self.actual_possibilities), "possibilities")
         self.current_distribution = pd.DataFrame(
-            self.calc_distributions_and_entropies(self.actual_possibilities)).sort_values(by="entropy", ascending=False)
-
+            self.calc_distributions_and_entropies(self.actual_possibilities)).sort_values(by="entropy", ascending=True)
 
 # if __name__ == "__main__":
 #     game = wordle.Game()
@@ -93,5 +91,3 @@ class InformedPlayer(CLIPlayer):
 #           time.time()- start_time)
 #     df.to_csv("word_distributions.csv")
 #     # game.play(player, random.choice(game.VALID_SOLUTIONS))
-
-
