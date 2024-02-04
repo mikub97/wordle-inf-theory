@@ -1,7 +1,6 @@
 import itertools
 import math
-
-from WordleAI import WordleAI, LetterInformation
+from WordleAI import WordleAI,LetterInformation
 from WordleJudge import WordleJudge
 
 class EntropyAI(WordleAI):

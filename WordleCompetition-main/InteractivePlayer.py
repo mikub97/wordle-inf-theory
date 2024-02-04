@@ -29,7 +29,7 @@ def to_enum(char):
         return 2
     return 3
 
-ai = LetterPopularityAI(WordList("data/official/combined_wordlist.txt").get_list_copy())
+ai = LetterPopularityAI(WordList("data/official/_combined_wordlist.txt").get_list_copy())
 guesses = [] # pass already done guesses in this list. It will overwrite the first AI guesses. You still have to relay the responses through console input
 
 attempts = 0

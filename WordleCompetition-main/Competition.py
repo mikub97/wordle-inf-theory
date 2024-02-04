@@ -2,7 +2,9 @@ import inspect
 import os
 import random
 import importlib
+import sys
 import time
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytablewriter
 import numpy as np
@@ -10,12 +12,41 @@ from pytablewriter.style import Style
 
 from WordList import *
 from WordleAI import *
-from ai_implementations import LetterPopularityAI
 
+def remaining_options(words, guess_history):
+    """
+    Filters a word list with all the known information.
+    Returns the list of remaining options.
+    """
+    present = set()
+    not_present = set()
+    correct = set()
+    present_letters = set()
+    for entry in guess_history:
+        for i in range(5):
+            if entry[1][i] == LetterInformation.CORRECT:
+                correct.add((entry[0][i], i))
+                present_letters.add(entry[0][i])
+            elif entry[1][i] == LetterInformation.PRESENT:
+                present.add((entry[0][i], i))
+                present_letters.add(entry[0][i])
+            else:
+                not_present.add(entry[0][i])
+
+    for c in present_letters:
+        words = [w for w in words if c in w]
+    for c in not_present:
+        words = [w for w in words if c not in w]
+    for c in correct:
+        words = [w for w in words if w[c[1]] == c[0]]
+    for c in present:
+        words = [w for w in words if w[c[1]] != c[0]]
+
+    return words
 
 class Competition:
 
-    def __init__(self, competitor_directory, wordlist_filename="data/official/combined_wordlist.txt", hard_mode=False):
+    def __init__(self, competitor_directory, wordlist_filename="data/official/_combined_wordlist.txt", hard_mode=False):
         self.competitor_directory = competitor_directory
         self.wordlist = WordList(wordlist_filename)
         self.words = self.wordlist.get_list_copy()
@@ -66,7 +97,7 @@ class Competition:
                 break
         return success, guesses
 
-    def fight(self, rounds, print_details=False, solution_wordlist_filename='data/official/combined_wordlist.txt',
+    def fight(self, rounds, print_details=False, solution_wordlist_filename='data/official/_combined_wordlist.txt',
               shuffle=False):
         print("Start tournament")
         result = {}
@@ -136,7 +167,7 @@ def is_hard_mode(word, guess_history):
     """
     Returns True if the word is a legal guess in hard mode.
     """
-    return len(LetterPopularityAI.remaining_options([word], guess_history)) == 1
+    return len(remaining_options([word], guess_history)) == 1
 
 
 def main():
@@ -144,7 +175,7 @@ def main():
     np.set_printoptions(suppress=True)
 
     competition = Competition("ai_implementations", wordlist_filename="data/official/combined_wordlist.txt", hard_mode=False)
-    competition.fight(rounds=1000, solution_wordlist_filename="data/official/shuffled_real_wordles.txt", print_details=False)
+    competition.fight(rounds=200, solution_wordlist_filename="data/official/shuffled_real_wordles.txt", print_details=False)
 
 if __name__ == "__main__":
     main()
